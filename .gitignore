@@ -1,0 +1,11 @@
+# Python virtual environment
+.venv/
+
+# Secrets - NEVER upload your API key!
+.env  # <--- THIS IS THE MAGIC LINE
+
+# Local databases
+*.sqlite
+
+# macOS specific files
+.DS_Store

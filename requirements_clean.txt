@@ -1,0 +1,47 @@
+# Core LangChain packages
+langchain==0.3.27
+langchain-community==0.3.30
+langchain-experimental==0.3.4
+langchain-google-genai==2.1.12
+langchain-huggingface==0.3.1
+langchain-tavily==0.2.11
+langchain-core==0.3.76
+langchain-text-splitters==0.3.11
+
+# LangGraph for multi-agent workflows  
+langgraph==0.6.7
+langgraph-checkpoint==2.1.1
+langgraph-prebuilt==0.6.4
+langgraph-sdk==0.2.9
+
+# Document processing
+unstructured==0.18.15
+unstructured-inference==1.0.5
+unstructured-client==0.42.3
+
+# PDF processing dependencies
+pdfminer.six==20250506
+pdfplumber==0.11.7
+pdf2image==1.17.0
+pypdf==6.1.1
+
+# Image processing
+pillow-heif==1.1.0
+pi-heif==1.1.0
+
+# Vector storage and embeddings
+faiss-cpu==1.12.0
+sentence-transformers==5.1.1
+
+# Machine learning dependencies
+torch==2.8.0
+transformers==4.56.2
+numpy==2.2.6
+scipy==1.16.2
+
+# Core utilities
+pydantic==2.11.9
+requests==2.32.5
+beautifulsoup4==4.14.0
+lxml==6.0.2
+nltk==3.9.1
