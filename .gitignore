@@ -6,6 +6,11 @@
 
 # Local databases
 *.sqlite
+*.sqlite-shm
+*.sqlite-wal
 
 # macOS specific files
 .DS_Store
+
+#html diagrams
+*.html

@@ -99,48 +99,49 @@ Respond with ONLY the numbered list of steps. If no tools are required, respond 
 
 
 def controller_node(state: AgentState):
-
+    # Case 1 & 2 (Synthesis and Conversational Reply) remain the same.
     if not state.get("plan") and state.get("past_steps"):
         print("---CONTROLLER: Plan complete. Synthesizing final answer.---")
+        # ... (synthesis logic is unchanged)
         synthesis_prompt = f"""Synthesize a final, comprehensive answer for the user based on their initial query and the results of the completed plan steps.
-    Your persona is a sophisticated financial AI assistant. Be helpful, clear, and detailed in your financial analysis.
-
-    INITIAL QUERY: {state['messages'][0].content}
-
-    COMPLETED STEPS & RESULTS:
-    {state['past_steps']}
-
-    Provide the final answer in a clear, human-readable format.
-    """
+Your persona is a sophisticated financial AI assistant. Be helpful, clear, and detailed in your financial analysis.
+INITIAL QUERY: {state['messages'][0].content}
+COMPLETED STEPS & RESULTS:
+{state['past_steps']}
+Provide the final answer in a clear, human-readable format.
+"""
         response = reasoning_llm.invoke(synthesis_prompt)
         return {"messages": [AIMessage(content=response.content)]}
 
     elif not state.get("plan"):
         print("---CONTROLLER: No plan needed. Answering directly.---")
-        direct_answer_prompt = f"""You are a helpful and friendly AI assistant. Please provide a direct, conversational response to the user's query.
-
-    User Query: "{state['messages'][0].content}"
-    """
+        # ... (direct answer logic is unchanged)
+        direct_answer_prompt = f"""You are a helpful and friendly AI assistant. Please provide a direct, conversational response.
+User Query: "{state['messages'][0].content}"
+"""
         response = reasoning_llm.invoke(direct_answer_prompt)
         return {"messages": [AIMessage(content=response.content)]}
 
-    # Case 3: The plan is not empty, execute the next step. (With an improved prompt)
+    # Case 3: The plan is not empty, execute the next step. (This is where the fix is)
     else:
         print("---CONTROLLER: Executing next step---")
         next_step = state["plan"][0]
         
-        # --- IMPROVED EXECUTOR PROMPT ---
-        executor_prompt = f"""You are an execution agent. Your sole job is to choose the single best tool to complete the next step of a plan.
-    Do not attempt to answer the question yourself. Only select a tool.
+        # --- NEW, STRICTER EXECUTOR PROMPT ---
+        executor_prompt = f"""You are an execution agent. Your sole job is to choose and call the single best tool to complete the next step of a plan.
 
-    The user's overall goal is: "{state['messages'][0].content}"
+The user's overall goal is: "{state['messages'][0].content}"
+The results from previous steps are: {state['past_steps']}
+The next step you must execute is: "{next_step}"
 
-    The next step you must execute is: "{next_step}"
+**CRITICAL INSTRUCTIONS:**
+1.  **VERIFY DATA:** If the step is a calculation, you MUST use numbers found in the 'results from previous steps'.
+2.  **NO HALLUCINATION:** If the necessary numbers are NOT in the previous steps, DO NOT make them up. You must call the `InformationTool` again with a very specific query to find the missing number(s).
+3.  **PRINT FOR MATH:** When calling `MathTool`, the 'expression' MUST be a valid Python expression that prints the result. For example: `print(200744 / 383285)` or `print(150 + 350)`.
 
-    Here are the available tools: {", ".join([tool.__name__ for tool in available_tools])}
-
-    Based on the next step, which tool should you call?
-    """
+Based on the next step and the information you have, which single tool should you call?
+"""
+        # --- END OF NEW PROMPT ---
         
         response = reasoning_llm_with_tools.invoke(executor_prompt)
         return {"messages": [response]}
@@ -226,7 +227,14 @@ if __name__ == "__main__":
             continue
         if not query.strip(): continue
 
-        initial_state = {"messages": [HumanMessage(content=query)]}
+        # In the main loop
+        initial_state = {
+            "messages": [HumanMessage(content=query)],
+            # These lines erase the "whiteboard" for the new task
+            "plan": [],
+            "past_steps": [],
+            "trace": []
+        }
         print(f"\n--- Starting Swarm with Query: '{query}' ---")
         
         final_state = None
@@ -242,11 +250,12 @@ if __name__ == "__main__":
             "trace": trace,
             "final_answer": final_answer
         }
-   
-        print("\n--- Structured Log ---")
-        print(json.dumps(log_output, indent=2, default=str)) # Use default=str to handle non-serializable objects
-             
+
+        #final answer
         print("\n--- Final Answer ---")
         print(final_answer)
-        
+        #structured log
+        print("\n--- Structured Log ---")
+        print(json.dumps(log_output, indent=2, default=str)) # Use default=str to handle non-serializable objects
+            
         print("-" * 20)
