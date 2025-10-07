@@ -38,7 +38,6 @@ class ChartAnalysisTool(BaseModel):
     """Call this to analyze an image of a chart, figure, or table from a local file."""
     image_path: str = Field(..., description="The local file path to the image.")
     question: str = Field(..., description="The specific question to ask about the image's content.")
-# NOTE: SummarizationTool is removed as a tool, as the LLM can summarize natively.
 
 # --- 2. Enhanced Agent State with Planning ---
 class AgentState(TypedDict):
@@ -56,9 +55,9 @@ information_agent_tool = create_information_agent()
 python_repl_tool = PythonREPLTool()
 web_search_tool = TavilySearch(max_results=2)
 
-# We use a powerful model for planning and reasoning
+# Text llm
 reasoning_llm = ChatGoogleGenerativeAI(model="models/gemini-pro-latest", temperature=0)
-# And a cost-effective model for vision tasks
+# Vision llm for ChartAnalysisTool
 vision_llm = ChatGoogleGenerativeAI(model="models/gemini-2.5-flash", temperature=0)
 
 available_tools = [InformationTool, MathTool, WebSearchTool, ChartAnalysisTool]
@@ -72,7 +71,6 @@ def planner_node(state: AgentState):
     print("---PLANNER: Devising a step-by-step plan---")
     user_query = state["messages"][-1].content
     
-    # This is a much more robust "few-shot" prompt
     planner_prompt = f"""You are an expert planning agent. Your job is to create a clear, numbered, step-by-step plan to answer a user's complex query.
 
 **Key Instructions:**
@@ -99,10 +97,9 @@ Respond with ONLY the numbered list of steps. If no tools are required, respond 
     plan = [line.strip().split(". ", 1)[1] for line in response.content.split("\n") if ". " in line]
     return {"plan": plan}
 
-# The improved controller_node function
 
 def controller_node(state: AgentState):
-    # Case 1: The plan is complete, and we have results to synthesize. (This logic is perfect)
+
     if not state.get("plan") and state.get("past_steps"):
         print("---CONTROLLER: Plan complete. Synthesizing final answer.---")
         synthesis_prompt = f"""Synthesize a final, comprehensive answer for the user based on their initial query and the results of the completed plan steps.
@@ -118,7 +115,6 @@ def controller_node(state: AgentState):
         response = reasoning_llm.invoke(synthesis_prompt)
         return {"messages": [AIMessage(content=response.content)]}
 
-    # Case 2: The plan is empty from the start. (This logic is also perfect)
     elif not state.get("plan"):
         print("---CONTROLLER: No plan needed. Answering directly.---")
         direct_answer_prompt = f"""You are a helpful and friendly AI assistant. Please provide a direct, conversational response to the user's query.
@@ -145,7 +141,6 @@ def controller_node(state: AgentState):
 
     Based on the next step, which tool should you call?
     """
-        # --- END IMPROVEMENT ---
         
         response = reasoning_llm_with_tools.invoke(executor_prompt)
         return {"messages": [response]}

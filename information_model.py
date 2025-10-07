@@ -5,7 +5,7 @@ from langchain_community.vectorstores import FAISS
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.runnable import RunnableLambda
 from langchain_core.messages import HumanMessage
-from pydantic import BaseModel, Field # Ensure pydantic is imported correctly
+from pydantic import BaseModel, Field 
 
 # --- Configuration ---
 FAISS_INDEX_PATH = "faiss_index_multimodal"
@@ -51,10 +51,9 @@ def create_information_agent():
 
     # --- THIS IS THE CORRECTED FUNCTION ---
     def multimodal_rag_chain(question: str):
-        # Step 1: Retrieve documents (this was already working)
+        # Step 1: Retrieve documents 
         retrieved_docs = retriever.invoke(question)
 
-        # Step 2: Format the documents for the LLM (the fix is here)
         # We now correctly assign the single return value to 'context_parts'
         context_parts = format_retrieved_documents(retrieved_docs)
         

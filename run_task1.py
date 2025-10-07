@@ -2,8 +2,7 @@ import os
 import base64
 from io import BytesIO
 
-# Essential libraries for multimodal processing
-import fitz # PyMuPDF for rendering PDF pages as images
+import fitz 
 from PIL import Image
 from unstructured.partition.pdf import partition_pdf
 
